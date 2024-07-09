@@ -15,7 +15,96 @@
 -- You should have received a copy of the GNU General Public License
 -- along with nvim-vscode.  If not, see <https://www.gnu.org/licenses/>.
 
-require("config.lazy")
+-- Bootstrap lazy.nvim
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+  if vim.v.shell_error ~= 0 then
+    vim.api.nvim_echo({
+      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+      { out, "WarningMsg" },
+      { "\nPress any key to exit..." },
+    }, true, {})
+    vim.fn.getchar()
+    os.exit(1)
+  end
+end
+
+vim.opt.rtp:prepend(lazypath)
+-- sync system clipboard
+vim.opt.clipboard = 'unnamedplus'
+-- search ignoring case
+vim.opt.ignorecase = true
+-- disable "ignorecase" option if the search pattern contains upper case characters
+vim.opt.smartcase = true
+-- Make sure to setup `mapleader` and `maplocalleader` before
+-- loading lazy.nvim so that mappings are correct.
+-- This is also a good place to setup other settings (vim.opt)
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+
+require("lazy").setup({
+  spec = {
+    {
+      "vscode-neovim/vscode-multi-cursor.nvim",
+      event = "VeryLazy",
+      opts = function ()
+      vim.api.nvim_set_hl(0, 'VSCodeCursor', {
+          bg = '#542fa4',
+          fg = 'white',
+          default = true
+      })
+
+      vim.api.nvim_set_hl(0, 'VSCodeCursorRange', {
+      bg = '#542fa4',
+      fg = 'white',
+      default = true
+      })
+
+      local cursors = require('vscode-multi-cursor')
+      vim.keymap.set({"n", "x", "i"}, "<c-d>", function()
+        cursors.addSelectionToNextFindMatch()
+      end)
+
+      vim.keymap.set({"n", "x", "i"}, "<cs-d>", function()
+        cursors.addSelectionToPreviousFindMatch()
+      end)
+
+      vim.keymap.set({"n", "x", "i"}, "<cs-l>", function()
+        cursors.selectHighlights()
+      end)
+
+      vim.keymap.set('n', '<c-d>', 'mciw*:nohl<cr>', { remap = true })
+      end
+    },
+    {
+      "folke/flash.nvim",
+      opts=function ()
+        vim.api.nvim_set_hl(0, 'FlashLabel', {
+            bg = '#e11684',
+            fg = 'white'
+        })
+
+        vim.api.nvim_set_hl(0, 'FlashMatch', {
+            bg = '#7c634c',
+            fg = 'white'
+        })
+
+        vim.api.nvim_set_hl(0, 'FlashCurrent', {
+            bg = '#7c634c',
+            fg = 'white'
+        })
+      end
+    }
+    -- add your plugins here
+  },
+  -- Configure any other settings here. See the documentation for more details.
+  -- colorscheme that will be used when installing plugins.
+  install = { colorscheme = { "habamax" } },
+  -- automatically check for plugin updates
+  checker = { enabled = true },
+})
 
 vim.cmd([[
     function! s:manageEditorSize(...)
